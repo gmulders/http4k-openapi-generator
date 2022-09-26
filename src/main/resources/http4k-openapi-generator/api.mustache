@@ -1,0 +1,35 @@
+package {{package}}
+
+import arrow.core.Either
+{{#imports}}import {{import}}
+{{/imports}}
+
+{{#operations}}
+class {{classname}} (
+{{#bodyLenses}}
+	val {{name}}: {{type}},
+{{/bodyLenses}}
+) {
+
+{{#otherLenses}}
+	val {{name}} = {{{definition}}}
+{{/otherLenses}}
+
+{{#operation}}
+	fun {{operationId}}(f: ({{#allParams}}{{paramName}}: {{dataType}}{{^-last}}, {{/-last}}{{/allParams}}) -> Either<Error, {{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Unit{{/returnType}}>): RoutingHttpHandler {
+		{{#allParams}}
+		{{>lens_definition}}
+		{{/allParams}}
+
+		return "{{path}}" bind Method.{{httpMethod}} to { req: Request ->
+			f({{#allParams}}{{#isPrimitiveType}}{{paramName}}{{/isPrimitiveType}}{{^isPrimitiveType}}{{paramName}}Lens(req){{/isPrimitiveType}}{{^-last}}, {{/-last}}{{/allParams}})
+				.fold(
+					{ doe iets met error },
+					{ Response(Status.OK).with(identityLens of it) },
+				)
+		}
+	}
+{{/operation}}
+
+{{/operations}}
+}

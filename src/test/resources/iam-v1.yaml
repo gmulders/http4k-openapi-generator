@@ -1,0 +1,214 @@
+openapi: "3.0.3"
+info:
+  version: 1.0.0
+  title: Identity and Access Management
+  license:
+    name: MIT
+servers:
+  - url: http://example.com/v1
+paths:
+  /identity:
+    get:
+      summary: List all identities
+      operationId: listIdentities
+      tags:
+        - identity
+      parameters:
+        - name: size
+          in: query
+          description: How many items to return on one page (default 100)
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: page
+          in: query
+          description: Page index (default 0)
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        200:
+          description: A paged array of identities
+          headers:
+            x-next:
+              description: A link to the next page of responses
+              schema:
+                type: integer
+                format: int32
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/Identities"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create a new identity
+      operationId: createIdentity
+      tags:
+        - identity
+      requestBody:
+        description: The identity to create
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewIdentity"
+      responses:
+        201:
+          description: Created identity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Identity"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /identity/{identityId}:
+    get:
+      summary: Get an identity by its id 
+      operationId: showIdentityById
+      tags:
+        - identity
+      parameters:
+        - name: identityId
+          in: path
+          required: true
+          description: The id of the identity to retrieve
+          schema:
+            type: string
+            format: uuid
+            x-go-type: uuid.UUID
+            x-go-type-import:
+              path: github.com/google/uuid
+      responses:
+        200:
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Identity"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Update an identity
+      operationId: updateIdentity
+      tags:
+        - identity
+      parameters:
+        - name: identityId
+          in: path
+          required: true
+          description: The id of the identity to retrieve
+          schema:
+            type: string
+            format: uuid
+            x-go-type: uuid.UUID
+            x-go-type-import:
+              path: github.com/google/uuid
+      requestBody:
+        description: The identity to update
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewIdentity"
+      responses:
+        200:
+          description: Updated identity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Identity"
+        404:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete an identity
+      operationId: deleteIdentity
+      tags:
+        - identity
+      parameters:
+        - name: identityId
+          in: path
+          required: true
+          description: The id of the identity to retrieve
+          schema:
+            type: string
+            format: uuid
+            x-go-type: uuid.UUID
+            x-go-type-import:
+              path: github.com/google/uuid
+      responses:
+        200:
+          description: Deleted identity
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    NewIdentity:
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        password:
+          type: string
+    Identity:
+      required:
+        - id
+        - email
+      properties:
+        id:
+          type: string
+          format: uuid
+          x-go-type: uuid.UUID
+          x-go-type-import:
+            path: github.com/google/uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+    Identities:
+      type: array
+      items:
+        $ref: "#/components/schemas/Identity"
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
